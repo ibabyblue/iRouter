@@ -1,67 +1,63 @@
 import SwiftUI
 import iRouter
 
-// MARK: - Scene
+// MARK: - ① Stack Demo
+// Tests: push / pop / popToRoot / dedup
 
-struct BasicDemoView: View {
+struct StackDemoView: View {
     @State private var router = IRouter<AppRoute>(root: .home)
 
     var body: some View {
         IRouterView(router: router) { route in
-            switch route {
-            case .home:           BasicHomeView()
-            case .detail(let id): BasicDetailView(id: id)
-            case .feed:           BasicFeedView()
-            default:              EmptyView()
-            }
+            StackHomeView(route: route)
         }
-        .navigationTitle("Basic")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-// MARK: - Views
-
-private struct BasicHomeView: View {
+private struct StackHomeView: View {
+    let route: AppRoute
     @Environment(IRouter<AppRoute>.self) var router
 
     var body: some View {
         List {
-            Section("Stack") {
-                Button("Push Detail") { router.push(.detail(id: "42")) }
-                Button("Push Detail (dedup)") { router.push(.detail(id: "42"), dedup: true) }
+            Section("Router State") {
+                RouterStateView(router: router)
             }
-            Section("Modal") {
-                Button("Sheet Detail") { router.sheet(.detail(id: "sheet")) }
-                Button("FullScreen Feed") { router.fullScreenCover(.feed) }
+            Section("Push") {
+                Button("push(.a)")  { router.push(.a) }
+                Button("push(.b)")  { router.push(.b) }
+                Button("push(.a) 再次 — 允许重复（no dedup）") { router.push(.a) }
+            }
+            Section("Dedup — 栈顶相同则忽略") {
+                Button("push(.a, dedup: true) — 栈顶是 .a → 忽略") {
+                    router.push(.a, dedup: true)
+                }
+                Button("push(.b, dedup: true) — 栈顶不是 .b → 正常入栈") {
+                    router.push(.b, dedup: true)
+                }
+            }
+            Section("Pop") {
+                Button("pop()")       { router.pop() }
+                Button("popToRoot()") { router.popToRoot() }
+            }
+            Section("关闭 Demo") {
+                Button("退出", role: .destructive) { router.dismissAndPush(.home) }
             }
         }
-        .navigationTitle("Home")
+        .listStyle(.insetGrouped)
+        .navigationTitle("Stack — 当前: \(route.description)")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                // 用 dismiss environment 关闭 fullScreenCover
+                DismissButton()
+            }
+        }
     }
 }
 
-private struct BasicDetailView: View {
-    let id: String
-    @Environment(IRouter<AppRoute>.self) var router
-
+struct DismissButton: View {
+    @Environment(\.dismiss) private var dismiss
     var body: some View {
-        List {
-            Button("Push Nested Detail") { router.push(.detail(id: "child-\(id)")) }
-            Button("Pop")               { router.pop() }
-            Button("Pop to Root")       { router.popToRoot() }
-        }
-        .navigationTitle("Detail \(id)")
-    }
-}
-
-private struct BasicFeedView: View {
-    @Environment(IRouter<AppRoute>.self) var router
-
-    var body: some View {
-        List {
-            Button("Push Detail inside Cover") { router.push(.detail(id: "in-cover")) }
-            Button("Dismiss")                  { router.dismiss() }
-        }
-        .navigationTitle("Feed (Cover)")
+        Button("关闭") { dismiss() }
     }
 }

@@ -4,14 +4,24 @@ import iRouter
 // MARK: - Route
 
 enum AppRoute: Hashable, Sendable {
-    case home
-    case detail(id: String)
-    case settings
-    case login
-    case feed
+    case home, a, b, c, settings, login, feed
 }
 
-// MARK: - Auth (demo-only singleton)
+extension AppRoute: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .home:     return "home"
+        case .a:        return "A"
+        case .b:        return "B"
+        case .c:        return "C"
+        case .settings: return "settings"
+        case .login:    return "login"
+        case .feed:     return "feed"
+        }
+    }
+}
+
+// MARK: - Auth (demo-only)
 
 final class AuthState {
     static let shared = AuthState()
@@ -19,18 +29,67 @@ final class AuthState {
     private init() {}
 }
 
-// MARK: - Demo menu
+// MARK: - Router state widget
 
-struct ContentView: View {
+struct RouterStateView: View {
+    let router: IRouter<AppRoute>
     var body: some View {
-        NavigationStack {
-            List {
-                NavigationLink("Basic Navigation") { BasicDemoView() }
-                NavigationLink("Filter / Auth Guard")  { FilterDemoView() }
-                NavigationLink("Flush Mode")           { FlushDemoView() }
-                NavigationLink("Multi-Tab Routers")    { TabDemoView() }
-            }
-            .navigationTitle("iRouter Demo")
+        VStack(alignment: .leading, spacing: 4) {
+            stateRow(icon: "square.stack",
+                     text: "path: [\(router.path.map(\.description).joined(separator: ", "))]")
+            stateRow(icon: "rectangle.bottomthird.inset.filled",
+                     text: "sheet: \(router.sheetContext.map(\.route.description) ?? "nil")")
+            stateRow(icon: "rectangle.inset.filled",
+                     text: "cover: \(router.coverContext.map(\.route.description) ?? "nil")")
+        }
+        .font(.caption.monospaced())
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func stateRow(icon: String, text: String) -> some View {
+        Label(text, systemImage: icon).foregroundStyle(.secondary)
+    }
+}
+
+// MARK: - Demo picker
+// Each demo is presented as a fullScreenCover to avoid nested NavigationStack.
+
+private enum Demo: Int, Identifiable {
+    case stack, modals, filter, childRouter, multiRouter
+    var id: Int { rawValue }
+    var title: String {
+        switch self {
+        case .stack:       return "① Stack — push / pop / popToRoot / dedup"
+        case .modals:      return "② Modals — sheet / cover / dismiss / flush"
+        case .filter:      return "③ Filter — allow / block / redirect / chain"
+        case .childRouter: return "④ Child Router — 独立子栈 + Filter 继承"
+        case .multiRouter: return "⑤ Multi-Router — 两实例互相独立"
         }
     }
 }
+
+struct ContentView: View {
+    @State private var activeDemo: Demo?
+
+    var body: some View {
+        NavigationStack {
+            List(Demo.allCases, id: \.id) { demo in
+                Button(demo.title) { activeDemo = demo }
+            }
+            .navigationTitle("iRouter 功能测试")
+        }
+        .fullScreenCover(item: $activeDemo) { demo in
+            switch demo {
+            case .stack:       StackDemoView()
+            case .modals:      ModalDemoView()
+            case .filter:      FilterDemoView()
+            case .childRouter: ChildRouterDemoView()
+            case .multiRouter: MultiRouterDemoView()
+            }
+        }
+    }
+}
+
+extension Demo: CaseIterable {}

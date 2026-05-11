@@ -1,61 +1,70 @@
 import SwiftUI
 import iRouter
 
-// MARK: - Scene
-// Simulates a push notification tap: opens a sheet, then taps "Notification" which
-// calls flush: true — the sheet is dismissed automatically before navigating.
+// MARK: - ② Modal Demo
+// Tests: sheet / fullScreenCover / dismiss（cover > sheet > pop）
+//        dismissAndPush / flush（push / sheet / cover 均支持）
 
-struct FlushDemoView: View {
+struct ModalDemoView: View {
     @State private var router = IRouter<AppRoute>(root: .home)
 
     var body: some View {
         IRouterView(router: router) { route in
-            switch route {
-            case .home:           FlushHomeView()
-            case .detail(let id): FlushDetailView(id: id)
-            default:              EmptyView()
-            }
+            ModalHomeView(route: route)
         }
-        .navigationTitle("Flush")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-// MARK: - Views
-
-private struct FlushHomeView: View {
+private struct ModalHomeView: View {
+    let route: AppRoute
     @Environment(IRouter<AppRoute>.self) var router
 
     var body: some View {
         List {
-            Section {
-                Button("Open Sheet") { router.sheet(.detail(id: "in-sheet")) }
-            } header: {
-                Text("Step 1 — open a sheet to simulate modal state")
+            Section("Router State") {
+                RouterStateView(router: router)
             }
-            Section {
-                Button("Simulate Notification Tap") {
-                    // flush: true dismisses any open modals before navigating
-                    router.push(.detail(id: "from-notification"), flush: true)
+            Section("Sheet / FullScreenCover") {
+                Button("sheet(.login)")           { router.sheet(.login) }
+                Button("fullScreenCover(.feed)")  { router.fullScreenCover(.feed) }
+            }
+            Section("Stack（为 dismiss 优先级测试准备）") {
+                Button("push(.a)") { router.push(.a) }
+            }
+            Section("Dismiss — 优先级 cover > sheet > pop") {
+                Button("dismiss()  — 依次关闭 cover / sheet / pop") {
+                    router.dismiss()
                 }
-            } header: {
-                Text("Step 2 — tap to navigate with flush, sheet closes automatically")
+                Button("dismissAndPush(.b)  — 清除所有模态 + push(.b)") {
+                    router.dismissAndPush(.b)
+                }
+            }
+            Section("Flush — 导航前先清除所有模态") {
+                Button("先 sheet，再 push(.a, flush: true)") {
+                    router.sheet(.login)
+                    // 短暂延迟让 sheet 动画完成后再触发
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        router.push(.a, flush: true)
+                    }
+                }
+                Button("先 cover，再 sheet(.settings, flush: true)") {
+                    router.fullScreenCover(.feed)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        router.sheet(.settings, flush: true)
+                    }
+                }
+                Button("先 cover，再 fullScreenCover(.login, flush: true)") {
+                    router.fullScreenCover(.feed)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        router.fullScreenCover(.login, flush: true)
+                    }
+                }
             }
         }
-        .navigationTitle("Flush Demo")
-    }
-}
-
-private struct FlushDetailView: View {
-    let id: String
-    @Environment(IRouter<AppRoute>.self) var router
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("Destination: \(id)")
-                .font(.title2)
-            Button("Dismiss / Pop") { router.dismiss() }
+        .listStyle(.insetGrouped)
+        .navigationTitle("Modals — 当前: \(route.description)")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) { DismissButton() }
         }
-        .navigationTitle("Detail")
     }
 }
