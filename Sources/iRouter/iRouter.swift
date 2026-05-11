@@ -1,1 +1,24 @@
-// placeholder
+import Foundation
+import Observation
+
+@MainActor
+@available(iOS 17, *)
+@Observable
+public final class IRouter<Route: Hashable & Sendable> {
+    public let root: Route
+    public var path: [Route] = []
+    public var sheetContext: IRouterContext<Route>? = nil
+    public var coverContext: IRouterContext<Route>? = nil
+    private let filters: [IRouterFilter<Route>]
+    public init(root: Route, filters: [IRouterFilter<Route>] = []) {
+        self.root = root
+        self.filters = filters
+    }
+    public func push(_ route: Route, dedup: Bool = false, flush: Bool = false) {}
+    public func pop() {}
+    public func popToRoot() {}
+    public func sheet(_ route: Route, flush: Bool = false) {}
+    public func fullScreenCover(_ route: Route, flush: Bool = false) {}
+    public func dismiss() {}
+    public func dismissAndPush(_ route: Route) {}
+}
