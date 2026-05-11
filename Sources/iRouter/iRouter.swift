@@ -30,10 +30,26 @@ public final class IRouter<Route: Hashable & Sendable> {
         path.removeAll()
     }
 
-    public func sheet(_ route: Route, flush: Bool = false) {}
-    public func fullScreenCover(_ route: Route, flush: Bool = false) {}
-    public func dismiss() {}
-    public func dismissAndPush(_ route: Route) {}
+    public func sheet(_ route: Route, flush: Bool = false) {
+        if flush { clearModals() }
+        sheetContext = IRouterContext(route: route, filters: filters)
+    }
+
+    public func fullScreenCover(_ route: Route, flush: Bool = false) {
+        if flush { clearModals() }
+        coverContext = IRouterContext(route: route, filters: filters)
+    }
+
+    public func dismiss() {
+        if coverContext != nil { coverContext = nil; return }
+        if sheetContext != nil { sheetContext = nil; return }
+        if !path.isEmpty       { path.removeLast() }
+    }
+
+    public func dismissAndPush(_ route: Route) {
+        clearModals()
+        push(route)
+    }
 
     private func clearModals() {
         coverContext = nil

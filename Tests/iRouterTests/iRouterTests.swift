@@ -79,4 +79,99 @@ private enum TR: Hashable, Sendable {
         r.push(.detail)
         #expect(r.path == [.detail, .detail])
     }
+
+    // MARK: - flush
+
+    @Test @MainActor
+    func flushClearsSheetBeforePush() {
+        let r = IRouter<TR>(root: .home)
+        r.sheetContext = IRouterContext(route: .login, filters: [])
+        r.push(.detail, flush: true)
+        #expect(r.sheetContext == nil)
+        #expect(r.path == [.detail])
+    }
+
+    @Test @MainActor
+    func flushClearsCoverBeforePush() {
+        let r = IRouter<TR>(root: .home)
+        r.coverContext = IRouterContext(route: .settings, filters: [])
+        r.push(.detail, flush: true)
+        #expect(r.coverContext == nil)
+        #expect(r.path == [.detail])
+    }
+
+    // MARK: - sheet
+
+    @Test @MainActor
+    func sheetSetsContext() {
+        let r = IRouter<TR>(root: .home)
+        r.sheet(.login)
+        #expect(r.sheetContext?.route == .login)
+    }
+
+    @Test @MainActor
+    func sheetCreatesChildRouterWithSameRoot() {
+        let r = IRouter<TR>(root: .home)
+        r.sheet(.login)
+        #expect(r.sheetContext?.childRouter.root == .login)
+    }
+
+    // MARK: - fullScreenCover
+
+    @Test @MainActor
+    func coverSetsContext() {
+        let r = IRouter<TR>(root: .home)
+        r.fullScreenCover(.settings)
+        #expect(r.coverContext?.route == .settings)
+    }
+
+    // MARK: - dismiss
+
+    @Test @MainActor
+    func dismissCoverFirst() {
+        let r = IRouter<TR>(root: .home)
+        r.sheetContext = IRouterContext(route: .login, filters: [])
+        r.coverContext = IRouterContext(route: .settings, filters: [])
+        r.dismiss()
+        #expect(r.coverContext == nil)
+        #expect(r.sheetContext?.route == .login)
+    }
+
+    @Test @MainActor
+    func dismissSheetIfNoCover() {
+        let r = IRouter<TR>(root: .home)
+        r.sheetContext = IRouterContext(route: .login, filters: [])
+        r.dismiss()
+        #expect(r.sheetContext == nil)
+    }
+
+    @Test @MainActor
+    func dismissPopsPathIfNoModals() {
+        let r = IRouter<TR>(root: .home)
+        r.push(.detail)
+        r.dismiss()
+        #expect(r.path.isEmpty)
+    }
+
+    @Test @MainActor
+    func dismissDoesNothingWhenEmpty() {
+        let r = IRouter<TR>(root: .home)
+        r.dismiss()
+        #expect(r.path.isEmpty)
+        #expect(r.sheetContext == nil)
+        #expect(r.coverContext == nil)
+    }
+
+    // MARK: - dismissAndPush
+
+    @Test @MainActor
+    func dismissAndPushClearsModalsAndPushes() {
+        let r = IRouter<TR>(root: .home)
+        r.sheetContext = IRouterContext(route: .login, filters: [])
+        r.coverContext = IRouterContext(route: .settings, filters: [])
+        r.dismissAndPush(.detail)
+        #expect(r.sheetContext == nil)
+        #expect(r.coverContext == nil)
+        #expect(r.path == [.detail])
+    }
 }
