@@ -9,29 +9,60 @@ struct TabDemoView: View {
         TabView {
             IRouterView(router: tabARouter) { route in
                 switch route {
-                case .home:           HomeView()
-                case .detail(let id): DetailView(id: id)
-                case .settings:       SettingsView()
-                case .login:          LoginView()
-                case .feed:           FeedView()
+                case .home:           TabHomeView(label: "Tab A")
+                case .detail(let id): TabDetailView(id: id)
+                default:              EmptyView()
                 }
             }
-            .tabItem {
-                Label("Home", systemImage: "house")
-            }
+            .tabItem { Label("Tab A", systemImage: "house") }
 
             IRouterView(router: tabBRouter) { route in
                 switch route {
-                case .home:           HomeView()
-                case .detail(let id): DetailView(id: id)
-                case .settings:       SettingsView()
-                case .login:          LoginView()
-                case .feed:           FeedView()
+                case .feed:           TabFeedView()
+                case .detail(let id): TabDetailView(id: id)
+                default:              EmptyView()
                 }
             }
-            .tabItem {
-                Label("Feed", systemImage: "list.bullet")
-            }
+            .tabItem { Label("Tab B", systemImage: "list.bullet") }
         }
+    }
+}
+
+// MARK: - Views
+
+private struct TabHomeView: View {
+    let label: String
+    @Environment(IRouter<AppRoute>.self) var router
+
+    var body: some View {
+        List {
+            Button("Push Detail") { router.push(.detail(id: "\(label)-1")) }
+        }
+        .navigationTitle(label)
+    }
+}
+
+private struct TabFeedView: View {
+    @Environment(IRouter<AppRoute>.self) var router
+
+    var body: some View {
+        List {
+            Text("This tab has its own independent router.")
+            Button("Push Detail") { router.push(.detail(id: "feed-1")) }
+        }
+        .navigationTitle("Tab B")
+    }
+}
+
+private struct TabDetailView: View {
+    let id: String
+    @Environment(IRouter<AppRoute>.self) var router
+
+    var body: some View {
+        List {
+            Button("Pop") { router.pop() }
+            Button("Pop to Root") { router.popToRoot() }
+        }
+        .navigationTitle("Detail \(id)")
     }
 }

@@ -1,66 +1,67 @@
 import SwiftUI
 import iRouter
 
-struct HomeView: View {
+// MARK: - Scene
+
+struct BasicDemoView: View {
+    @State private var router = IRouter<AppRoute>(root: .home)
+
+    var body: some View {
+        IRouterView(router: router) { route in
+            switch route {
+            case .home:           BasicHomeView()
+            case .detail(let id): BasicDetailView(id: id)
+            case .feed:           BasicFeedView()
+            default:              EmptyView()
+            }
+        }
+        .navigationTitle("Basic")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Views
+
+private struct BasicHomeView: View {
     @Environment(IRouter<AppRoute>.self) var router
 
     var body: some View {
         List {
-            Section("Basic Navigation") {
-                Button("Push Detail") {
-                    router.push(.detail(id: "42"))
-                }
-                Button("Push Settings (auth guarded)") {
-                    router.push(.settings)
-                }
-                Button("Sheet Login") {
-                    router.sheet(.login)
-                }
-                Button("FullScreen Feed") {
-                    router.fullScreenCover(.feed)
-                }
+            Section("Stack") {
+                Button("Push Detail") { router.push(.detail(id: "42")) }
+                Button("Push Detail (dedup)") { router.push(.detail(id: "42"), dedup: true) }
+            }
+            Section("Modal") {
+                Button("Sheet Detail") { router.sheet(.detail(id: "sheet")) }
+                Button("FullScreen Feed") { router.fullScreenCover(.feed) }
             }
         }
         .navigationTitle("Home")
     }
 }
 
-struct DetailView: View {
+private struct BasicDetailView: View {
     let id: String
     @Environment(IRouter<AppRoute>.self) var router
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Detail: \(id)")
-                .font(.title)
-            Button("Push Another Detail") {
-                router.push(.detail(id: "sub-\(id)"))
-            }
-            Button("Pop") {
-                router.pop()
-            }
-            Button("Pop to Root") {
-                router.popToRoot()
-            }
+        List {
+            Button("Push Nested Detail") { router.push(.detail(id: "child-\(id)")) }
+            Button("Pop")               { router.pop() }
+            Button("Pop to Root")       { router.popToRoot() }
         }
         .navigationTitle("Detail \(id)")
     }
 }
 
-struct FeedView: View {
+private struct BasicFeedView: View {
     @Environment(IRouter<AppRoute>.self) var router
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Feed (FullScreenCover)")
-                .font(.title2)
-            Button("Dismiss") {
-                router.dismiss()
-            }
-            Button("Push Detail inside Cover") {
-                router.push(.detail(id: "feed-1"))
-            }
+        List {
+            Button("Push Detail inside Cover") { router.push(.detail(id: "in-cover")) }
+            Button("Dismiss")                  { router.dismiss() }
         }
-        .navigationTitle("Feed")
+        .navigationTitle("Feed (Cover)")
     }
 }

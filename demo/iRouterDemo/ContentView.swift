@@ -1,6 +1,8 @@
 import SwiftUI
 import iRouter
 
+// MARK: - Route
+
 enum AppRoute: Hashable, Sendable {
     case home
     case detail(id: String)
@@ -9,24 +11,26 @@ enum AppRoute: Hashable, Sendable {
     case feed
 }
 
+// MARK: - Auth (demo-only singleton)
+
 final class AuthState {
     static let shared = AuthState()
     var isLoggedIn = false
     private init() {}
 }
 
-struct ContentView: View {
-    let router: IRouter<AppRoute>
+// MARK: - Demo menu
 
+struct ContentView: View {
     var body: some View {
-        IRouterView(router: router) { route in
-            switch route {
-            case .home:           HomeView()
-            case .detail(let id): DetailView(id: id)
-            case .settings:       SettingsView()
-            case .login:          LoginView()
-            case .feed:           FeedView()
+        NavigationStack {
+            List {
+                NavigationLink("Basic Navigation") { BasicDemoView() }
+                NavigationLink("Filter / Auth Guard")  { FilterDemoView() }
+                NavigationLink("Flush Mode")           { FlushDemoView() }
+                NavigationLink("Multi-Tab Routers")    { TabDemoView() }
             }
+            .navigationTitle("iRouter Demo")
         }
     }
 }
