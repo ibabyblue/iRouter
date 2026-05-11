@@ -174,4 +174,100 @@ private enum TR: Hashable, Sendable {
         #expect(r.coverContext == nil)
         #expect(r.path == [.detail])
     }
+
+    // MARK: - filter: allow
+
+    @Test @MainActor
+    func filterAllowLetsPushThrough() {
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { _, _ in .allow }
+        ])
+        r.push(.detail)
+        #expect(r.path == [.detail])
+    }
+
+    // MARK: - filter: block
+
+    @Test @MainActor
+    func filterBlockPreventsPush() {
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { _, _ in .block }
+        ])
+        r.push(.detail)
+        #expect(r.path.isEmpty)
+    }
+
+    @Test @MainActor
+    func filterBlockPreventsSheet() {
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { _, _ in .block }
+        ])
+        r.sheet(.login)
+        #expect(r.sheetContext == nil)
+    }
+
+    @Test @MainActor
+    func filterBlockPreventsCover() {
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { _, _ in .block }
+        ])
+        r.fullScreenCover(.settings)
+        #expect(r.coverContext == nil)
+    }
+
+    // MARK: - filter: redirect
+
+    @Test @MainActor
+    func filterRedirectsToLoginSheet() {
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { route, _ in
+                if case .settings = route { return .redirect(.login, .sheet) }
+                return .allow
+            }
+        ])
+        r.push(.settings)
+        #expect(r.path.isEmpty)
+        #expect(r.sheetContext?.route == .login)
+    }
+
+    // MARK: - filter chain order
+
+    @Test @MainActor
+    func filterChainStopsAtFirstBlock() {
+        nonisolated(unsafe) var order: [Int] = []
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { _, _ in order.append(1); return .block },
+            IRouterFilter { _, _ in order.append(2); return .allow },
+        ])
+        r.push(.detail)
+        #expect(order == [1])
+    }
+
+    @Test @MainActor
+    func filterChainAllFiltersRunOnAllAllow() {
+        nonisolated(unsafe) var order: [Int] = []
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { _, _ in order.append(1); return .allow },
+            IRouterFilter { _, _ in order.append(2); return .allow },
+        ])
+        r.push(.detail)
+        #expect(order == [1, 2])
+        #expect(r.path == [.detail])
+    }
+
+    // MARK: - child router inherits filters
+
+    @Test @MainActor
+    func childRouterInheritsFilters() {
+        let r = IRouter<TR>(root: .home, filters: [
+            IRouterFilter { route, _ in
+                if case .detail = route { return .block }
+                return .allow
+            }
+        ])
+        r.sheet(.login)
+        let child = r.sheetContext!.childRouter
+        child.push(.detail)
+        #expect(child.path.isEmpty)
+    }
 }
