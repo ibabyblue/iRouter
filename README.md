@@ -36,7 +36,7 @@ In Xcode choose **File → Add Package Dependencies**, enter the repository URL,
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ibabyblue/iRouter", from: "0.0.1")
+    .package(url: "https://github.com/ibabyblue/iRouter", from: "0.0.2")
 ],
 targets: [
     .target(
