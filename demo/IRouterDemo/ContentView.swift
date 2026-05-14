@@ -79,7 +79,7 @@ struct ContentView: View {
             List(Demo.allCases, id: \.id) { demo in
                 Button(demo.title) { activeDemo = demo }
             }
-            .navigationTitle("iRouter 功能测试")
+            .navigationTitle("IRouter 功能测试")
         }
         .fullScreenCover(item: $activeDemo) { demo in
             switch demo {
