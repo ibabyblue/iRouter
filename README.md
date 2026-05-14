@@ -1,4 +1,4 @@
-# iRouter
+# IRouter
 
 A pure SwiftUI routing library for iOS 17+ and macOS 14+. Type-safe navigation for Push, Sheet, and FullScreenCover — with a built-in filter chain, dedup, and flush mode. Zero third-party dependencies.
 
@@ -36,13 +36,13 @@ In Xcode choose **File → Add Package Dependencies**, enter the repository URL,
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ibabyblue/iRouter", from: "0.0.2")
+    .package(url: "https://github.com/ibabyblue/IRouter", from: "0.0.3")
 ],
 targets: [
     .target(
         name: "YourTarget",
         dependencies: [
-            .product(name: "iRouter", package: "iRouter")
+            .product(name: "IRouter", package: "IRouter")
         ]
     )
 ]
@@ -51,7 +51,7 @@ targets: [
 ## Quick Start
 
 ```swift
-import iRouter
+import IRouter
 
 // 1. Define routes
 enum AppRoute: Hashable, Sendable {
@@ -251,7 +251,7 @@ struct RootView: View {
 
 ## Demo
 
-Open `demo/iRouterDemo.xcodeproj`, select a simulator and run. Covers four scenarios:
+Open `demo/IRouterDemo.xcodeproj`, select a simulator and run. Covers four scenarios:
 
 - **Basic** — push / pop / popToRoot, sheet, fullScreenCover, live state display
 - **Filter** — allow / block / redirect / chain, with a live filter execution log
@@ -268,4 +268,4 @@ Open `demo/iRouterDemo.xcodeproj`, select a simulator and run. Covers four scena
 
 ## License
 
-iRouter is available under the MIT license. See the [LICENSE](LICENSE) file for details.
+IRouter is available under the MIT license. See the [LICENSE](LICENSE) file for details.
